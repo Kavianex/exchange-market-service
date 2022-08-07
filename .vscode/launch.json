@@ -1,0 +1,24 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Server",
+            "type": "python",
+            "request": "launch",
+            "program": "app/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "POSTGRES_DB": "dbname",
+                "POSTGRES_PASSWORD": "dbpass",
+                "POSTGRES_PORT": "5434",
+                "POSTGRES_HOST": "localhost",
+                "POSTGRES_USER": "dbuser",
+                "SERVICE_PORT": "8001",
+            }
+        },
+    ]
+}

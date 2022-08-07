@@ -1,0 +1,26 @@
+version: '3.3'
+services:
+  market-service:
+    container_name: market-service
+    restart: unless-stopped
+    image: market-service
+    build: .
+    environment:
+      - SERVICE_PORT=80
+      - POSTGRES_HOST=market-db
+    ports:
+      - "8000:80"
+    depends_on:
+      - market-db
+  market-db:
+    container_name: market-db
+    restart: always
+    image: postgres:13.3
+    environment:
+      - POSTGRES_DB=dbname
+      - POSTGRES_USER=dbuser
+      - POSTGRES_PASSWORD=dbpass
+    volumes:
+      - market-service:/var/lib/postgresql/data
+volumes:
+  market-service:
