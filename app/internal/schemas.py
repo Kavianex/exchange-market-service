@@ -78,18 +78,21 @@ class SymbolIn(Symbol):
     def validate_precisions(cls, values):
         base_asset = values.get("base_asset", "")
         quote_asset = values.get("quote_asset", "")
-        if not base_asset or not quote_asset:
+        base_precision = values.get("base_precision")
+        quote_precision = values.get("quote_precision")
+        if not base_asset or not quote_asset or not base_precision or not quote_precision:
             return values
-        base_precision = int(values.get("base_precision", 1))
+        base_precision = int(base_precision)
+        quote_precision = int(quote_precision)
         base_asset = Asset.get_asset(base_asset)
         if base_asset.digits < base_precision:
             raise ValueError("base_precision is too big")
         quote_asset = Asset.get_asset(quote_asset)
-        quote_precision = int(values.get("quote_precision", 1))
         if quote_asset.digits < quote_precision:
             raise ValueError("quote_precision is too big")
-        if quote_asset.digits * base_asset.digits < quote_precision:
-            raise ValueError("quote_precision is too big")
+        if quote_precision * base_precision > quote_asset.digits:
+            raise ValueError(
+                "quote_precision * base_precision can't be more than quote_asset.digits")
         if not cls.is_new(base_asset=base_asset.symbol, quote_asset=quote_asset.symbol):
             raise ValueError("symbol exsists")
         return values
