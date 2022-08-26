@@ -14,7 +14,7 @@ class Asset(pydantic.BaseModel):
         use_enum_values = True
 
     @staticmethod
-    def get_asset(symbol):
+    def get_asset(symbol: str) -> models.Asset | None:
         db = database.SessionLocal()
         asset = db.query(models.Asset).filter(
             models.Asset.symbol == symbol
@@ -57,6 +57,16 @@ class Symbol(pydantic.BaseModel):
         orm_mode = True
         use_enum_values = True
 
+    @classmethod
+    def is_new(cls, base_asset: str, quote_asset: str) -> bool:
+        db = database.SessionLocal()
+        symbol = db.query(models.Symbol).filter(
+            models.Symbol.base_asset == base_asset,
+            models.Symbol.quote_asset == quote_asset,
+        ).first()
+        db.close()
+        return symbol is None
+
 
 class SymbolOut(Symbol):
     symbol: str
@@ -64,18 +74,24 @@ class SymbolOut(Symbol):
 
 
 class SymbolIn(Symbol):
-    @pydantic.root_validator(pre=True)
+    @pydantic.root_validator()
     def validate_precisions(cls, values):
-        base_asset = str(values.get("base_asset", ""))
+        base_asset = values.get("base_asset", "")
+        quote_asset = values.get("quote_asset", "")
+        if not base_asset or not quote_asset:
+            return values
         base_precision = int(values.get("base_precision", 1))
         base_asset = Asset.get_asset(base_asset)
-        if not base_asset or base_asset.digits < base_precision:
+        if base_asset.digits < base_precision:
             raise ValueError("base_precision is too big")
-        quote_asset = str(values.get("quote_asset", ""))
         quote_asset = Asset.get_asset(quote_asset)
         quote_precision = int(values.get("quote_precision", 1))
-        if not quote_asset or quote_asset.digits < quote_precision:
+        if quote_asset.digits < quote_precision:
             raise ValueError("quote_precision is too big")
+        if quote_asset.digits * base_asset.digits < quote_precision:
+            raise ValueError("quote_precision is too big")
+        if not cls.is_new(base_asset=base_asset.symbol, quote_asset=quote_asset.symbol):
+            raise ValueError("symbol exsists")
         return values
 
     @pydantic.validator('base_asset', 'quote_asset', allow_reuse=True)
